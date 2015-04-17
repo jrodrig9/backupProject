@@ -1,0 +1,9 @@
+#!/usr/bin/env python
+
+try: 
+     import boto
+     import boto.ec2
+except ImportError:
+       sys.stderr.write("You do not have boto, please get it from  https://github.com/boto/boto")
+       sys.exit(1)
+print "Boto is installed"
