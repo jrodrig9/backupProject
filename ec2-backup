@@ -27,6 +27,8 @@ def main(argv):
                sys.exit(0)
           elif opt in ("-m"):
                method = arg
+               if (method != "dd" or method != "rsync"):
+                   errorMsg("The given method is not valid, please use either dd or rsync")
           elif opt in ("-v"):
                volumeId = arg
      #print "Method is: ", method
@@ -34,4 +36,6 @@ def main(argv):
      #print args
      if not(existsDir(args[0])):
          errorMsg("The given directory does not exist: "+args[0]);
+     sys.exit(0)
+
 main(sys.argv[1:])
