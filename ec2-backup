@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 import boto
+import boto.ec2
 import sys
 import getopt
 import os
@@ -39,11 +40,11 @@ def main(argv):
           if opt == "-h":
                print "Usage: ec2-backup [-h] [-m method] [-v volume-id] dir"
                sys.exit(0)
-          elif opt in ("-m"):
+          elif opt == "-m":
                method = arg
                if (method != "dd" and  method != "rsync"):
                    errorMsg("The given method is not valid, please use either dd or rsync")
-          elif opt in ("-v"):
+          elif opt == "-v":
                volumeId = arg
      #print "Method is: ", method
      #print "Volume is: ", volume
@@ -52,6 +53,21 @@ def main(argv):
      if not(existsDir(directory)):
          errorMsg("The given directory does not exist: "+args[0]);
      #print bytesToGB(getDirSize(directory)), "GBytes"
+     accessKey = os.environ.get("EC2_CERT")
+     secretKey = os.environ.get("EC2_PRIVATE_KEY")
+     conn = boto.connect_ec2(accessKey, secretKey)
+     #got the connection to start, assuming the EC2_Cert is my access key, and private key is the secret key. Problem is I can't really start an instance.. the amis for all isntances are in a dictinary bellow: (all fedoras)
+     amis = { 
+         'us-east-1': 'ami-84db39ed',  
+         'us-west-2':  'ami-080f9038',
+         'us-west-1': 'ami-3d3a6b78',
+         'eu-west-1': 'ami-13042f67',
+         'eu-central-1': 'ami-147c4109',
+         'ap-northeast-1': 'ami-038d6603',
+         'ap-southeast-2': 'ami-01e6963b',
+         'ap-southeast-1': 'ami-83f58ad1',
+         'sa-east-1': 'ami-056ecf18',
+         }
      sys.exit(0)
 
 main(sys.argv[1:])
