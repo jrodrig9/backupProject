@@ -4,6 +4,7 @@ import boto
 import sys
 import getopt
 import os
+import math
 
 def errorMsg(msg):
     sys.stderr.write("ERROR - " + str(msg) + "\n")
@@ -12,9 +13,22 @@ def errorMsg(msg):
 def existsDir(directory):
     return os.path.exists(directory) and os.path.isdir(directory)
 
+#This function was taken from http://stackoverflow.com/questions/1392413/calculating-a-directory-size-using-python
+def getDirSize(directory):
+    size = 0
+    for dirPath, dirNames, fileNames in os.walk(directory):
+        for f in fileNames:
+            filePointer = os.path.join(dirPath, f)
+            size += os.path.getsize(filePointer)
+    return size
+
+def bytesToGB(size):
+    return size/(1024*1024*1024)+1
+
 def main(argv):
      method = ''
      volumeId = ''
+     directory = ''
      try:
           opts, args = getopt.getopt(argv, "-hm:v:")
      except getopt.GetoptError:
@@ -27,15 +41,17 @@ def main(argv):
                sys.exit(0)
           elif opt in ("-m"):
                method = arg
-               if (method != "dd" or method != "rsync"):
+               if (method != "dd" and  method != "rsync"):
                    errorMsg("The given method is not valid, please use either dd or rsync")
           elif opt in ("-v"):
                volumeId = arg
      #print "Method is: ", method
      #print "Volume is: ", volume
      #print args
-     if not(existsDir(args[0])):
+     directory = args[0]
+     if not(existsDir(directory)):
          errorMsg("The given directory does not exist: "+args[0]);
+     #print bytesToGB(getDirSize(directory)), "GBytes"
      sys.exit(0)
 
 main(sys.argv[1:])
