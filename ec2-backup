@@ -77,13 +77,11 @@ def dd(hostname, directory):
 #             errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
 
 def rsync(hostname, directory):
-	status = subprocess.call("rsync -e \"ssh " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
-
-	if status == 0:
-		verboseMsg("Transfer complete!")
-
-	else:
-		errorMsg("Something went wrong during the transfer!")
+    try:
+	status = subprocess.check_output("rsync -e \"ssh " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
+    except getopt.GetoptError as e:
+        errorMsg(e)
+    verboseMsg("Transfer complete!")
 
 def main(argv):
      method = ''
@@ -215,7 +213,20 @@ def main(argv):
      else:
          verboseMsg("Starting dd backup")
          dd(dns, directory)
-         
+     #detach volume from instance
+     awsCall = "aws ec2 detach-volume --volume-id " + volumeId
+     try: 
+         detachStats = subprocess.check_output(awsCall, shell=True)
+     except subprocess.CalledProcessError as e:
+         errorMsg(e)
+     verboseMsg("Detached volume from instance")
+     #terminate instance
+     awsCall = "aws ec2 terminate-instances --instance-ids " + instId
+     try:
+         terminateInst = subprocess.check_output(awsCall, shell=True)
+     except subprocess.CalledProcessError as e:
+         errorMsg(e)
+     verboseMsg("Terminated the instance created")
      
     #Print the volume Id used and exit with a 0 status
      print volumeId
