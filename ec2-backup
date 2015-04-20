@@ -60,7 +60,7 @@ def availToZone(availZone):
 def dd(hostname, directory):
 	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
    try:
-       status = subprocess.check_output("tar -cfz backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
+       status = subprocess.check_output("tar -cf backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
    except getopt.GetoptError as e:
        errorMsg(e)
    verboseMsg("Transfer complete!")
