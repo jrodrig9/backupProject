@@ -78,7 +78,7 @@ def dd(hostname, directory):
 
 def rsync(hostname, directory):
     try:
-	status = subprocess.check_output("rsync -e \"ssh " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
+	status = subprocess.check_output("rsync -e \"ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
     except getopt.GetoptError as e:
         errorMsg(e)
     verboseMsg("Transfer complete!")
