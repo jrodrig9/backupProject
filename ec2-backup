@@ -56,6 +56,9 @@ def availToZone(availZone):
         return zone
     return "None"
 
+def dd(hostname, directory):
+	
+
 def main(argv):
      method = ''
      volumeId = ''
