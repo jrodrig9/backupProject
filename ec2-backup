@@ -11,6 +11,7 @@ def errorMsg(msg):
     sys.exit(1)
 
 verbose = os.environ.get("EC2_BACKUP_VERBOSE")
+sshFlags = os.environ.get("EC2_BACKUP_FLAGS_SSH")
 
 def verboseMsg(msg):
     if verbose and msg:
@@ -56,17 +57,24 @@ def availToZone(availZone):
         return zone
     return "None"
 
-def dd(hostname, directory):
+#def dd(hostname, directory):
 	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
+#    try:
+#        status = subprocess.check_output("tar -cf backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
+#    except getopt.GetoptError as e:
+#        errorMsg(e)
+#    verboseMsg("Transfer complete!")
 
-	status = subprocess.call("tar cf " + directory + ".tar " + directory, shell=True)
+def dd(hostname, directory):
+    # status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
+    status = subprocess.call("tar cf " + directory + ".tar " + directory, shell=True)
 
-	if status == 0:
-		status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory".tar", shell=True)
-		if status == 0:
-			verboseMsg("Transfer complete!")
-	else:
-		errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
+    if status == 0:
+        status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory+".tar", shell=True)
+        if status == 0:
+            verboseMsg("Transfer complete!")
+        else:
+            errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
 
 def rsync(hostname, directory):
 	status = subprocess.call("rsync -a" + directory + " fedora@" + hostname + ":/")
@@ -164,14 +172,15 @@ def main(argv):
          'sa-east-1': 'ami-056ecf18',
          }
      #Create a new instance
-     awsCall = "aws ec2 run-instances --image-id " + amis[zone] + " " +  os.environ.get("EC2_BACKUP_FLAGS_AWS")
+     awsCall = "aws ec2 run-instances --image-id " + amis[zone] + " --placement AvailabilityZone=" + availZone + " " +  os.environ.get("EC2_BACKUP_FLAGS_AWS")
      try: 
          instanceInfo = subprocess.check_output(awsCall, shell=True)
      except subprocess.CalledProcessError as e:
          errorMsg(e)
      instanceInfo = instanceInfo.split()
-     verboseMsg("Created a new AWS instance with id of: " + instanceInfo[9])
-     awsCall = ("aws ec2 describe-instances --instance-ids " + instanceInfo[9])
+     instId = instanceInfo[9]
+     verboseMsg("Created a new AWS instance with id of: " + instId)
+     awsCall = ("aws ec2 describe-instances --instance-ids " + instId)
      dns = 'None'
      verboseMsg("Waiting for instance to start running...")
      #Wait for instance to become available
@@ -183,8 +192,32 @@ def main(argv):
          dns = dns.split()
          dns = dns[17]
      verboseMsg("Retrieved DNS-Name as: " + dns)
+     #Attach volume to instance
+     awsCall = "aws ec2 attach-volume --volume-id " + volumeId + " --instance-id " + instId + " --device /dev/sdf"
+     try:
+         attachInfo = subprocess.check_output(awsCall, shell=True)
+     except subprocess.CalledProcessError as e:
+         errorMsg(e)
+     #wait until attachment is complete
+     attachComplete = ""
+     awsCall = "aws ec2 describe-volumes --volume-ids " + volumeId
+     verboseMsg("Waiting for attachment to be completed")
+     while attachComplete != "attached":
+         try:
+             attachComplete = subprocess.check_output(awsCall, shell=True)
+         except subprocess.CalledProcessError as e:
+             errorMsg(e)
+         attachComplete = attachComplete.split()
+         attachComplete = attachComplete[13]
+     if (method == 'rsync'):
+         verboseMsg("perfoming rsync backup")
+         rsync(dns, directory)
+     else:
+         verboseMsg("Starting dd backup")
+         dd(dns, directory)
+         
      
-     #Print the volume Id used and exit with a 0 status
+    #Print the volume Id used and exit with a 0 status
      print volumeId
      sys.exit(0)
 
