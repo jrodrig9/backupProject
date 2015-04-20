@@ -1,11 +1,10 @@
 #!/usr/bin/env python
 
-import boto
-import boto.ec2
 import sys
 import getopt
 import os
 import math
+import subprocess
 
 def errorMsg(msg):
     sys.stderr.write("ERROR - " + str(msg) + "\n")
@@ -25,6 +24,31 @@ def getDirSize(directory):
 
 def bytesToGB(size):
     return size/(1024*1024*1024)+1
+
+def getAvailZone(availability):
+    if(availability):
+        for i in range(len(availability)):
+            if availability[i+2] == "available":
+                return availability[i+3]
+            i += 4
+    return "None"
+
+def getZone(availability):
+    if(availability):
+        for i in range(len(availability)):
+            if availability[i+2] == "available":
+                return availability[i+1]
+            i += 4
+    return "None"
+
+def availToZone(availZone):
+    if (availZone):
+        splitString = availZone.rsplit('-')
+        zone = '-'
+        sequence = (splitString[0], splitString[1])
+        zone = zone.join(sequence)
+        return zone
+    return "None"
 
 def main(argv):
      method = ''
@@ -51,12 +75,31 @@ def main(argv):
      #print args
      directory = args[0]
      if not(existsDir(directory)):
-         errorMsg("The given directory does not exist: "+args[0]);
+         errorMsg("The given directory does not exist: "+args[0])
      #print bytesToGB(getDirSize(directory)), "GBytes"
-     accessKey = os.environ.get("EC2_CERT")
-     secretKey = os.environ.get("EC2_PRIVATE_KEY")
-     conn = boto.connect_ec2(accessKey, secretKey)
-     #got the connection to start, assuming the EC2_Cert is my access key, and private key is the secret key. Problem is I can't really start an instance.. the amis for all isntances are in a dictinary bellow: (all fedoras)
+     volumeSize = bytesToGB(getDirSize(directory))
+     #print volumeId
+     if (not(volumeId)):
+         availability = subprocess.check_output("aws ec2 describe-availability-zones", shell=True)
+         availability = availability.rsplit()
+         availZone = getAvailZone(availability)
+         #print availZone
+         zone = getZone(availability)
+         #print zone
+
+     else:
+         availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
+         #print "did the program continue?"
+         availability = availability.rsplit()
+         availZone = availability[1]
+         #print availZone
+         zone = availToZone(availZone)
+         #print zone
+     if ( availZone == "None" or zone == "None"):
+         errorMsg("Problem retrieving a zone, is your [default zone] set on .aws/config?")
+         
+     
+     #The amis for all instances are in a dictionary bellow: (all fedora intances)
      amis = { 
          'us-east-1': 'ami-84db39ed',  
          'us-west-2':  'ami-080f9038',
