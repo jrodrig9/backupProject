@@ -94,7 +94,26 @@ def main(argv):
          availZone = getAvailZone(availability)
          zone = getZone(availability)
          verboseMsg("Retrieved avalailability zone to be: " + availZone + " and region to be: " + zone)
-
+         awsCall = "aws ec2 create-volume --size " + str(volumeSize) + " --region " + zone + " --availability-zone " + availZone
+         try:
+             volumeInfo = subprocess.check_output(awsCall, shell=True)
+         except subprocess.CalledProcessError as e:
+             errorMsg(e)
+         volumeInfo = volumeInfo.split()
+         volumeId = volumeInfo[5]
+         verboseMsg("Created a new volume with ID of : " + volumeId)
+         isVolumeReady = ""
+         awsCall = "aws ec2 describe-volumes --volume-ids " + volumeId
+         verboseMsg("Waiting for volume to be available")
+         while isVolumeReady != "available":
+              try:
+                  isVolumeReady = subprocess.check_output(awsCall, shell=True)
+              except subprocess.CalledProcessError as e:
+                  errorMsg(e)
+              isVolumeReady = isVolumeReady.split()
+              isVolumeReady = isVolumeReady[5]
+         verboseMsg("Volume is ready to go!")
+         
      else:
          try:
              availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
@@ -137,7 +156,8 @@ def main(argv):
          dns = dns.split()
          dns = dns[17]
      verboseMsg("Retrieved DNS-Name as: " + dns)
-         
+
+     print volumeInfo
      sys.exit(0)
 
 main(sys.argv[1:])
