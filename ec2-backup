@@ -64,6 +64,7 @@ def main(argv):
      method = ''
      volumeId = ''
      directory = ''
+     #Argument Parsing:
      try:
           opts, args = getopt.getopt(argv, "-hm:v:")
      except getopt.GetoptError:
@@ -83,18 +84,22 @@ def main(argv):
                volumeId = arg
                verboseMsg("Retrieved volumedId option")
      directory = args[0]
+     #Check for directory existance
      if not(existsDir(directory)):
          errorMsg("The given directory does not exist: "+args[0])
      verboseMsg("Checked whether directory exists")
      volumeSize = bytesToGB(getDirSize(directory))
      verboseMsg("Calculated that volume size needs to be " + str(volumeSize) + "GB")
+     #Decide whether to create a new instance or use the provided one
      if (not(volumeId)):
+         #create a new instance in the zones available to the user
          availability = subprocess.check_output("aws ec2 describe-availability-zones", shell=True)
          availability = availability.split()
          availZone = getAvailZone(availability)
          zone = getZone(availability)
          verboseMsg("Retrieved avalailability zone to be: " + availZone + " and region to be: " + zone)
          awsCall = "aws ec2 create-volume --size " + str(volumeSize) + " --region " + zone + " --availability-zone " + availZone
+         #Try to create a new volume
          try:
              volumeInfo = subprocess.check_output(awsCall, shell=True)
          except subprocess.CalledProcessError as e:
@@ -105,6 +110,7 @@ def main(argv):
          isVolumeReady = ""
          awsCall = "aws ec2 describe-volumes --volume-ids " + volumeId
          verboseMsg("Waiting for volume to be available")
+         #Wait until the volume is available
          while isVolumeReady != "available":
               try:
                   isVolumeReady = subprocess.check_output(awsCall, shell=True)
@@ -115,6 +121,7 @@ def main(argv):
          verboseMsg("Volume is ready to go!")
          
      else:
+         #If the user provided their own volume, check if it is valid
          try:
              availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
          except subprocess.CalledProcessError as e:
@@ -123,6 +130,7 @@ def main(argv):
          availZone = availability[1]
          zone = availToZone(availZone)
          verboseMsg("The volume you provided is available at: " + availZone + " and is from the region: " + zone) 
+     #If there is a problem with the zones, show an error message
      if ( availZone == "None" or zone == "None"):
          errorMsg("Problem retrieving a zone, is your [default zone] set on .aws/config?")
      
@@ -138,6 +146,7 @@ def main(argv):
          'ap-southeast-1': 'ami-83f58ad1',
          'sa-east-1': 'ami-056ecf18',
          }
+     #Create a new instance
      awsCall = "aws ec2 run-instances --image-id " + amis[zone] + " " +  os.environ.get("EC2_BACKUP_FLAGS_AWS")
      try: 
          instanceInfo = subprocess.check_output(awsCall, shell=True)
@@ -148,6 +157,7 @@ def main(argv):
      awsCall = ("aws ec2 describe-instances --instance-ids " + instanceInfo[9])
      dns = 'None'
      verboseMsg("Waiting for instance to start running...")
+     #Wait for instance to become available
      while dns == "None":
          try:
              dns = subprocess.check_output(awsCall, shell=True)
@@ -156,8 +166,9 @@ def main(argv):
          dns = dns.split()
          dns = dns[17]
      verboseMsg("Retrieved DNS-Name as: " + dns)
-
-     print volumeInfo
+     
+     #Print the volume Id used and exit with a 0 status
+     print volumeId
      sys.exit(0)
 
 main(sys.argv[1:])
