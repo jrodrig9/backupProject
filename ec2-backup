@@ -57,27 +57,27 @@ def availToZone(availZone):
         return zone
     return "None"
 
-#def dd(hostname, directory):
-	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
-#    try:
-#        status = subprocess.check_output("tar -cf backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
-#    except getopt.GetoptError as e:
-#        errorMsg(e)
-#    verboseMsg("Transfer complete!")
-
 def dd(hostname, directory):
-    # status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
-    status = subprocess.call("tar cf " + directory + ".tar " + directory, shell=True)
+	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
+   try:
+       status = subprocess.check_output("tar -cfz backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
+   except getopt.GetoptError as e:
+       errorMsg(e)
+   verboseMsg("Transfer complete!")
 
-    if status == 0:
-        status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory+".tar", shell=True)
-        if status == 0:
-            verboseMsg("Transfer complete!")
-        else:
-            errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
+# def dd(hostname, directory):
+#     # status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
+#     status = subprocess.call("tar cf " + directory + ".tar " + directory, shell=True)
+
+#     if status == 0:
+#         status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory+".tar", shell=True)
+#         if status == 0:
+#             verboseMsg("Transfer complete!")
+#         else:
+#             errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
 
 def rsync(hostname, directory):
-	status = subprocess.call("rsync -a" + directory + " fedora@" + hostname + ":/")
+	status = subprocess.call("rsync -e \"ssh " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
 
 	if status == 0:
 		verboseMsg("Transfer complete!")
