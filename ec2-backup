@@ -64,18 +64,18 @@ def dd(hostname, directory):
 	if status == 0:
 		status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory".tar", shell=True)
 		if status == 0:
-			print "Transfer complete!"
+			verboseMsg("Transfer complete!")
 	else:
-		print "Something went wrong with the tar process. Do you have enough free disk space?"
+		errorMsg( "Something went wrong with the tar process. Do you have enough free disk space?")
 
 def rsync(hostname, directory):
 	status = subprocess.call("rsync -a" + directory + " fedora@" + hostname + ":/")
 
 	if status == 0:
-		print "Transfer complete!"
+		verboseMsg("Transfer complete!")
 
 	else:
-		print "Something went wrong during the transfer!"
+		errorMsg("Something went wrong during the transfer!")
 
 def main(argv):
      method = ''
