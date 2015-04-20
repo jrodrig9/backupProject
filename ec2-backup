@@ -43,9 +43,9 @@ def getZone(availability):
 
 def availToZone(availZone):
     if (availZone):
-        splitString = availZone.rsplit('-')
+        splitString = availZone.split('-')
         zone = '-'
-        sequence = (splitString[0], splitString[1])
+        sequence = (splitString[0], splitString[1], splitString[2][0])
         zone = zone.join(sequence)
         return zone
     return "None"
@@ -81,7 +81,7 @@ def main(argv):
      #print volumeId
      if (not(volumeId)):
          availability = subprocess.check_output("aws ec2 describe-availability-zones", shell=True)
-         availability = availability.rsplit()
+         availability = availability.split()
          availZone = getAvailZone(availability)
          #print availZone
          zone = getZone(availability)
@@ -92,9 +92,9 @@ def main(argv):
          #print "did the program continue?"
          availability = availability.rsplit()
          availZone = availability[1]
-         #print availZone
+         print availZone
          zone = availToZone(availZone)
-         #print zone
+         print zone
      if ( availZone == "None" or zone == "None"):
          errorMsg("Problem retrieving a zone, is your [default zone] set on .aws/config?")
          
