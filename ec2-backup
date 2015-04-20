@@ -180,16 +180,31 @@ def main(argv):
      verboseMsg("Created a new AWS instance with id of: " + instId)
      awsCall = ("aws ec2 describe-instances --instance-ids " + instId)
      dns = 'None'
+     instState = "None"
      verboseMsg("Waiting for instance to start running...")
      #Wait for instance to become available
-     while dns == "None":
+     while instState != "running":
          try:
              dns = subprocess.check_output(awsCall, shell=True)
          except subprocess.CalledProcessError as e:
              errorMsg(e)
          dns = dns.split()
+         instState = dns[-1]
          dns = dns[17]
+        # print instState
      verboseMsg("Retrieved DNS-Name as: " + dns)
+     #wait until instance is ready to ssh
+     isReady = "None"
+     awsCall = "aws ec2 describe-instance-status --instance-ids " + instId
+     verboseMsg("waiting until the instance has been fully initialized...")
+     while isReady != "ok":
+         try:
+             status = subprocess.check_output(awsCall, shell=True)
+         except subprocess.CalledProcessError as e:
+             isReady = False;
+         isReady = status.split()
+         isReady = isReady[7]
+     verboseMsg("Instance is fully initialized, attaching volume to it")
      #Attach volume to instance
      awsCall = "aws ec2 attach-volume --volume-id " + volumeId + " --instance-id " + instId + " --device /dev/sdf"
      try:
@@ -206,7 +221,8 @@ def main(argv):
          except subprocess.CalledProcessError as e:
              errorMsg(e)
          attachComplete = attachComplete.split()
-         attachComplete = attachComplete[13]
+         attachComplete = attachComplete[13]            
+     #perform backup
      if (method == 'rsync'):
          verboseMsg("perfoming rsync backup")
          rsync(dns, directory)
