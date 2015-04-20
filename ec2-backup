@@ -92,8 +92,6 @@ def main(argv):
          verboseMsg("Retrieved avalailability zone to be: " + availZone + " and region to be: " + zone)
 
      else:
-       #  if (subprocess.check_call("aws ec2 describe-volumes --volume-ids "+volumeId, shell = True) > 0):
-         #    errorMsg("The volume-id provided is not valid")
          try:
              availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
          except subprocess.CalledProcessError as e:
@@ -104,7 +102,6 @@ def main(argv):
          verboseMsg("The volume you provided is available at: " + availZone + " and is from the region: " + zone) 
      if ( availZone == "None" or zone == "None"):
          errorMsg("Problem retrieving a zone, is your [default zone] set on .aws/config?")
-         
      
      #The amis for all instances are in a dictionary bellow: (all fedora intances)
      amis = { 
@@ -118,6 +115,25 @@ def main(argv):
          'ap-southeast-1': 'ami-83f58ad1',
          'sa-east-1': 'ami-056ecf18',
          }
+     awsCall = "aws ec2 run-instances --image-id " + amis[zone] + " " +  os.environ.get("EC2_BACKUP_FLAGS_AWS")
+     try: 
+         instanceInfo = subprocess.check_output(awsCall, shell=True)
+     except subprocess.CalledProcessError as e:
+         errorMsg(e)
+     instanceInfo = instanceInfo.split()
+     verboseMsg("Created a new AWS instance with id of: " + instanceInfo[9])
+     awsCall = ("aws ec2 describe-instances --instance-ids " + instanceInfo[9])
+     dns = 'None'
+     verboseMsg("Waiting for instance to start running...")
+     while dns == "None":
+         try:
+             dns = subprocess.check_output(awsCall, shell=True)
+         except subprocess.CalledProcessError as e:
+             errorMsg(e)
+         dns = dns.split()
+         dns = dns[17]
+     verboseMsg("Retrieved DNS-Name as: " + dns)
+         
      sys.exit(0)
 
 main(sys.argv[1:])
