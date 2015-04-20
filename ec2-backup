@@ -68,6 +68,15 @@ def dd(hostname, directory):
 	else:
 		print "Something went wrong with the tar process. Do you have enough free disk space?"
 
+def rsync(hostname, directory):
+	status = subprocess.call("rsync -a" + directory + " fedora@" + hostname + ":/")
+
+	if status == 0:
+		print "Transfer complete!"
+
+	else:
+		print "Something went wrong during the transfer!"
+
 def main(argv):
      method = ''
      volumeId = ''
