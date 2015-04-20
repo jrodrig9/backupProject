@@ -224,21 +224,21 @@ def main(argv):
          attachComplete = attachComplete.split()
          attachComplete = attachComplete[13]            
      #mount volume
-     awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkdir " + mountDir + " 2>/dev/null \""
-     try:
-        status = subprocess.check_output(awsCall, shell=True)
-     except subprocess.CalledProcessError as e:
-        errorMsg(e)
-     awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkfs.ext3 /dev/sdf 1>/dev/null 2>/dev/null\""
-     try:
-        status = subprocess.check_output(awsCall, shell=True)
-     except subprocess.CalledProcessError as e:
-        errorMsg(e)
-     awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mount /dev/sdf " + mountDir + "\""
-     try:
-        status = subprocess.check_output(awsCall, shell=True)
-     except subprocess.CalledProcessError as e:
-        errorMsg(e)
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkdir " + mountDir + " 2>/dev/null \""
+     #try:
+     #   status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #   errorMsg(e)
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkfs.ext3 /dev/sdf 1>/dev/null 2>/dev/null\""
+     #try:
+     #   status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #   errorMsg(e)
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mount /dev/sdf " + mountDir + "\""
+     #try:
+     #   status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #   errorMsg(e)
 
      #perform backup
      if (method == 'rsync'):
