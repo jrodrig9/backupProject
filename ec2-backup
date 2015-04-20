@@ -57,8 +57,16 @@ def availToZone(availZone):
     return "None"
 
 def dd(hostname, directory):
-	status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
-	print status
+	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
+
+	status = subprocess.call("tar cf " + directory + ".tar " + directory, shell=True)
+
+	if status == 0:
+		status = subprocess.call("dd if=" + directory + ".tar | ssh fedora@" + hostname +" dd of=" + directory".tar", shell=True)
+		if status == 0:
+			print "Transfer complete!"
+	else:
+		print "Something went wrong with the tar process. Do you have enough free disk space?"
 
 def main(argv):
      method = ''
