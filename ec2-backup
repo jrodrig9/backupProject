@@ -12,6 +12,7 @@ def errorMsg(msg):
 
 verbose = os.environ.get("EC2_BACKUP_VERBOSE")
 sshFlags = os.environ.get("EC2_BACKUP_FLAGS_SSH")
+mountDir = "/mnt/backup"
 
 def verboseMsg(msg):
     if verbose and msg:
@@ -60,7 +61,7 @@ def availToZone(availZone):
 def dd(hostname, directory):
 	# status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.tar", shell=True)
    try:
-       status = subprocess.check_output("tar -cf backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf bs=64k conv=block\"", shell=True)
+       status = subprocess.check_output("tar -cf backup.tar " + directory + " | ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + " root@" + hostname + " \"dd of=/dev/sdf/ bs=64k conv=block\"", shell=True)
    except getopt.GetoptError as e:
        errorMsg(e)
    verboseMsg("Transfer complete!")
@@ -78,7 +79,7 @@ def dd(hostname, directory):
 
 def rsync(hostname, directory):
     try:
-	status = subprocess.check_output("rsync -e \"ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + "\" -avRz " + directory + "fedora@" + hostname + ":/dev/sdf", shell=True)
+	status = subprocess.check_output("rsync -e \"ssh -oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null " + sshFlags + "\" -avRz " + directory + " root@" + hostname + ":/dev/sdf/", shell=True)
     except getopt.GetoptError as e:
         errorMsg(e)
     verboseMsg("Transfer complete!")
@@ -222,6 +223,23 @@ def main(argv):
              errorMsg(e)
          attachComplete = attachComplete.split()
          attachComplete = attachComplete[13]            
+     #mount volume
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkdir " + mountDir + "\""
+     #try:
+     #    status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #    errorMsg(e)
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mkfs -t ext3 /dev/sdf \""
+     #try:
+     #    status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #    errorMsg(e)
+     #awsCall = "ssh " + sshFlags + "-oStrictHostKeyChecking=no -oUserKnownHostsFile=/dev/null root@" + dns + " \"mount /dev/sdf " + mountDir + "\""
+     #try:
+     #    status = subprocess.check_output(awsCall, shell=True)
+     #except subprocess.CalledProcessError as e:
+     #    errorMsg(e)
+
      #perform backup
      if (method == 'rsync'):
          verboseMsg("perfoming rsync backup")
