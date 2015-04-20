@@ -10,6 +10,12 @@ def errorMsg(msg):
     sys.stderr.write("ERROR - " + str(msg) + "\n")
     sys.exit(1)
 
+verbose = os.environ.get("EC2_BACKUP_VERBOSE")
+
+def verboseMsg(msg):
+    if verbose and msg:
+        print "Step - " +  msg
+
 def existsDir(directory):
     return os.path.exists(directory) and os.path.isdir(directory)
 
@@ -68,35 +74,34 @@ def main(argv):
                method = arg
                if (method != "dd" and  method != "rsync"):
                    errorMsg("The given method is not valid, please use either dd or rsync")
+               verboseMsg("Retrieved method option") 
           elif opt == "-v":
                volumeId = arg
-     #print "Method is: ", method
-     #print "Volume is: ", volume
-     #print args
+               verboseMsg("Retrieved volumedId option")
      directory = args[0]
      if not(existsDir(directory)):
          errorMsg("The given directory does not exist: "+args[0])
-     #print bytesToGB(getDirSize(directory)), "GBytes"
+     verboseMsg("Checked whether directory exists")
      volumeSize = bytesToGB(getDirSize(directory))
-     #print volumeId
+     verboseMsg("Calculated that volume size needs to be " + str(volumeSize) + "GB")
      if (not(volumeId)):
          availability = subprocess.check_output("aws ec2 describe-availability-zones", shell=True)
          availability = availability.split()
          availZone = getAvailZone(availability)
-         #print availZone
          zone = getZone(availability)
-         #print zone
+         verboseMsg("Retrieved avalailability zone to be: " + availZone + " and region to be: " + zone)
 
      else:
-         if (subprocess.call("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True) > 0):
-             errorMsg("The volume-id provided is not valid")
-         availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
-         #print "did the program continue?"
+       #  if (subprocess.check_call("aws ec2 describe-volumes --volume-ids "+volumeId, shell = True) > 0):
+         #    errorMsg("The volume-id provided is not valid")
+         try:
+             availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
+         except subprocess.CalledProcessError as e:
+             errorMsg("The volume provided is not valid!")
          availability = availability.rsplit()
          availZone = availability[1]
-         print availZone
          zone = availToZone(availZone)
-         print zone
+         verboseMsg("The volume you provided is available at: " + availZone + " and is from the region: " + zone) 
      if ( availZone == "None" or zone == "None"):
          errorMsg("Problem retrieving a zone, is your [default zone] set on .aws/config?")
          
