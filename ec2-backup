@@ -57,7 +57,8 @@ def availToZone(availZone):
     return "None"
 
 def dd(hostname, directory):
-	
+	status = subprocess.check_output("dd if="+directory+"| gzip -1 - | ssh fedora@"+ hostname+" dd of=image.gz", shell=True)
+	print status
 
 def main(argv):
      method = ''
