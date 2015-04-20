@@ -88,6 +88,8 @@ def main(argv):
          #print zone
 
      else:
+         if (subprocess.call("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True) > 0):
+             errorMsg("The volume-id provided is not valid")
          availability = subprocess.check_output("aws ec2 describe-volumes --volume-ids "+volumeId, shell=True)
          #print "did the program continue?"
          availability = availability.rsplit()
